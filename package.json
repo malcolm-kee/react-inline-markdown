@@ -1,5 +1,6 @@
 {
   "name": "react-inline-markdown",
+  "description": "Parsing inline markdown syntax for simple rich text support.",
   "author": "Malcolm Kee",
   "version": "0.1.1",
   "license": "MIT",
@@ -21,6 +22,11 @@
   "peerDependencies": {
     "react": ">=16"
   },
+  "keywords": [
+    "react",
+    "markdown",
+    "lightweight"
+  ],
   "husky": {
     "hooks": {
       "pre-commit": "tsdx lint"
