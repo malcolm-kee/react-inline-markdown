@@ -8,9 +8,8 @@ export type LinkRenderer = (props: {
 }) => JSX.Element;
 
 export type MarkdownRenderers = {
-  b: Renderer;
-  p: Renderer;
-  i: Renderer;
+  strong: Renderer;
+  em: Renderer;
   a: LinkRenderer;
 };
 
@@ -20,9 +19,8 @@ export type InlineMarkdownProps = {
 };
 
 const defaultRenderers: MarkdownRenderers = {
-  b: props => React.createElement('b', props),
-  p: props => React.createElement('p', props),
-  i: props => React.createElement('i', props),
+  strong: props => React.createElement('strong', props),
+  em: props => React.createElement('em', props),
   a: props => <a {...props} target="_BLANK" rel="noopener noreferrer" />,
 };
 
@@ -34,13 +32,14 @@ export const InlineMarkdown = ({
     return null;
   }
 
-  const mergedRenderer = Object.assign({}, defaultRenderers, renderers);
-
-  const asts = parseMarkdown(markdown);
+  const mergedRenderer = {
+    ...defaultRenderers,
+    ...renderers,
+  };
 
   return (
     <>
-      {asts.map((ast, i) => (
+      {parseMarkdown(markdown).map((ast, i) => (
         <Element ast={ast} renderers={mergedRenderer} key={i} />
       ))}
     </>
@@ -59,20 +58,16 @@ const Element = ({
   }
 
   switch (ast.type) {
-    case 'b':
-    case 'i':
+    case 'strong':
+    case 'em':
       return renderers[ast.type]({
-        children: ast.children.map((child, i) => (
-          <Element ast={child} renderers={renderers} key={i} />
-        )),
+        children: ast.children,
       });
 
     case 'a':
       return renderers.a({
         href: ast.data.url,
-        children: ast.children.map((child, i) => (
-          <Element ast={child} renderers={renderers} key={i} />
-        )),
+        children: ast.children,
       });
 
     default:
@@ -82,15 +77,15 @@ const Element = ({
 
 export type InlineMarkAST =
   | {
-      type: 'b' | 'i';
-      children: Array<InlineMarkAST>;
+      type: 'strong' | 'em';
+      children: string;
     }
   | {
       type: 'a';
       data: {
         url: string;
       };
-      children: Array<InlineMarkAST>;
+      children: string;
     }
   | string;
 
@@ -130,7 +125,7 @@ const parseMarkdownRecurse = (
           data: {
             url: linkUrlRegex.exec(part)![1],
           },
-          children: parseMarkdown(linkChildrenRegex.exec(part)![1]),
+          children: linkChildrenRegex.exec(part)![1],
         });
       }
     }
@@ -145,8 +140,8 @@ const parseMarkdownRecurse = (
         parseMarkdownRecurse(part, result);
       } else {
         result.push({
-          type: 'b',
-          children: parseMarkdown(part.slice(1, -1)),
+          type: 'strong',
+          children: part.slice(1, -1),
         });
       }
     }
@@ -161,8 +156,8 @@ const parseMarkdownRecurse = (
         parseMarkdownRecurse(part, result);
       } else {
         result.push({
-          type: 'i',
-          children: parseMarkdown(part.slice(1, -1)),
+          type: 'em',
+          children: part.slice(1, -1),
         });
       }
     }

@@ -23,7 +23,7 @@ const App = () => {
   return (
     <div>
       <InlineMarkdown
-        markdown={`Hi! I _am_ [*Malcolm* Kee](https://malcolmkee.com)`}
+        markdown={`Hi! I _am_ *Malcolm* [Kee](https://malcolmkee.com)`}
       />
     </div>
   );
@@ -36,6 +36,8 @@ ReactDOM.render(<App />, document.getElementById('root'));
 
 At the moment only 3 markdown syntaxes are supported:
 
+- link: `[link-text](link-url)`
 - italic: `_italic`
 - bold: `*bold*`
-- link: `[link-text](link-url)`
+
+Besides, you can't combine them together, i.e. `_*test*_` will not work.
