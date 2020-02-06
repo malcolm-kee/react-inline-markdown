@@ -30,6 +30,10 @@ export const InlineMarkdown = ({
   markdown,
   renderers = {},
 }: InlineMarkdownProps) => {
+  if (!markdown) {
+    return null;
+  }
+
   const mergedRenderer = Object.assign({}, defaultRenderers, renderers);
 
   const asts = parseMarkdown(markdown);

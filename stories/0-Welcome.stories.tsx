@@ -1,12 +1,16 @@
 import React from 'react';
-import { Thing } from '@';
+import { InlineMarkdown } from '@';
 
 export default {
-  title: 'Welcome',
+  title: 'React Inline Markdown',
 };
 
-export const toStorybook = () => <Thing />;
+export const toStorybook = () => (
+  <InlineMarkdown
+    markdown={`*Hello*! I am a [story](https://storybook.js.org/).`}
+  />
+);
 
 toStorybook.story = {
-  name: 'to Storybook',
+  name: 'Simple Example',
 };
