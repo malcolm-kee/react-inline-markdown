@@ -1,4 +1,6 @@
 {
+  "name": "react-inline-markdown",
+  "author": "Malcolm Kee",
   "version": "0.1.0",
   "license": "MIT",
   "main": "dist/index.js",
@@ -30,9 +32,7 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "name": "react-markdown-right",
-  "author": "Malcolm Kee",
-  "module": "dist/react-markdown-right.esm.js",
+  "module": "dist/react-inline-markdown.esm.js",
   "devDependencies": {
     "@babel/core": "^7.8.4",
     "@storybook/addon-actions": "^5.3.12",
