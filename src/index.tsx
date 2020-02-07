@@ -50,7 +50,7 @@ const Element = ({
   ast,
   renderers,
 }: {
-  ast: InlineMarkAST;
+  ast: InlineMarkAST | string;
   renderers: MarkdownRenderers;
 }) => {
   if (typeof ast === 'string') {
@@ -61,14 +61,27 @@ const Element = ({
     case 'strong':
     case 'em':
       return renderers[ast.type]({
-        children: ast.children,
+        children: ast.children.map((child, i) => (
+          <Element ast={child} renderers={renderers} key={i} />
+        )),
       });
 
     case 'a':
       return renderers.a({
         href: ast.data.url,
-        children: ast.children,
+        children: ast.children.map((child, i) => (
+          <Element ast={child} renderers={renderers} key={i} />
+        )),
       });
+
+    case '<>':
+      return (
+        <>
+          {ast.children.map((child, i) => (
+            <Element ast={child} renderers={renderers} key={i} />
+          ))}
+        </>
+      );
 
     default:
       return null;
@@ -78,16 +91,19 @@ const Element = ({
 export type InlineMarkAST =
   | {
       type: 'strong' | 'em';
-      children: string;
+      children: InlineMarkAST[];
     }
   | {
       type: 'a';
       data: {
         url: string;
       };
-      children: string;
+      children: InlineMarkAST[];
     }
-  | string;
+  | {
+      type: '<>';
+      children: Array<InlineMarkAST | string>;
+    };
 
 const anyMatch = /(\[.+?\]\(.+?\))|(\*.+?\*)|(_.+?_)/;
 const linkRegex = /(\[.+?\]\(.+?\))/;
@@ -99,17 +115,70 @@ const italicRegex = /(_.+?_)/;
 export const parseMarkdown = (markdown: string): InlineMarkAST[] => {
   const result: InlineMarkAST[] = [];
 
-  parseMarkdownRecurse(markdown, result);
+  parseMarkdownRecurseRegex(markdown, result);
 
   return result;
 };
 
-const parseMarkdownRecurse = (
+const TokenMap = {
+  '[': { regex: '\\[.+?\\]\\(.+?\\)', type: 'a', end: ')' },
+  '*': { regex: '\\*.+?\\*', type: 'strong', end: '*' },
+  _: { regex: '_.+?_', type: 'em', end: '_' },
+} as const;
+
+const anyTokenRegex = new RegExp(
+  TokenMap['*'].regex + '|' + TokenMap['_'].regex + '|' + TokenMap['['].regex
+);
+
+const parseMarkdownRecurse = (markdown: string): InlineMarkAST => {
+  let children: InlineMarkAST[] = [];
+  let toBeProcessed = markdown;
+
+  if (!markdown || !anyTokenRegex.test(markdown)) {
+    return {
+      type: '<>',
+      children: [markdown],
+    };
+  }
+
+  while (toBeProcessed && anyTokenRegex.test(toBeProcessed)) {
+    const match = anyTokenRegex.exec(toBeProcessed);
+    const matchIndex = match!.index;
+    const before = toBeProcessed.slice(0, matchIndex);
+    children.push({
+      type: '<>',
+      children: [before],
+    });
+    const matchedToken =
+      TokenMap[toBeProcessed[matchIndex] as keyof typeof TokenMap];
+    const endIndex = toBeProcessed.indexOf(matchedToken.end, matchIndex + 1);
+    const childrenText = toBeProcessed;
+
+    toBeProcessed = toBeProcessed.slice(endIndex + 1);
+  }
+
+  if (toBeProcessed) {
+    children.push({
+      type: '<>',
+      children: [toBeProcessed],
+    });
+  }
+
+  return {
+    type: '<>',
+    children,
+  };
+};
+
+const parseMarkdownRecurseRegex = (
   markdown: string,
   result: InlineMarkAST[]
 ): void => {
   if (!markdown || !anyMatch.test(markdown)) {
-    result.push(markdown);
+    result.push({
+      type: '<>',
+      children: [markdown],
+    });
     return;
   }
 
@@ -118,14 +187,14 @@ const parseMarkdownRecurse = (
     for (let i = 0; i < splitByLink.length; i++) {
       const part = splitByLink[i];
       if (i % 2 === 0) {
-        parseMarkdownRecurse(part, result);
+        parseMarkdownRecurseRegex(part, result);
       } else {
         result.push({
           type: 'a',
           data: {
             url: linkUrlRegex.exec(part)![1],
           },
-          children: linkChildrenRegex.exec(part)![1],
+          children: parseMarkdown(linkChildrenRegex.exec(part)![1]),
         });
       }
     }
@@ -137,11 +206,11 @@ const parseMarkdownRecurse = (
     for (let i = 0; i < splitByBold.length; i++) {
       const part = splitByBold[i];
       if (i % 2 === 0) {
-        parseMarkdownRecurse(part, result);
+        parseMarkdownRecurseRegex(part, result);
       } else {
         result.push({
           type: 'strong',
-          children: part.slice(1, -1),
+          children: parseMarkdown(part.slice(1, -1)),
         });
       }
     }
@@ -153,16 +222,16 @@ const parseMarkdownRecurse = (
     for (let i = 0; i < splitByItalic.length; i++) {
       const part = splitByItalic[i];
       if (i % 2 === 0) {
-        parseMarkdownRecurse(part, result);
+        parseMarkdownRecurseRegex(part, result);
       } else {
         result.push({
           type: 'em',
-          children: part.slice(1, -1),
+          children: parseMarkdown(part.slice(1, -1)),
         });
       }
     }
     return;
   }
 
-  result.push(markdown);
+  result.push({ type: '<>', children: [markdown] });
 };
