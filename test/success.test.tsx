@@ -54,4 +54,73 @@ describe(`InlineMarkdown success scenario`, () => {
     );
     expect(container.querySelectorAll('em')).toHaveLength(2);
   });
+
+  it('renders bold and italic in link', () => {
+    const { container } = render(
+      <InlineMarkdown markdown="Hello! I am [*Malcolm* _Kee_](https://malcolmkee.com)." />
+    );
+
+    expect(container.querySelector('a')).toMatchInlineSnapshot(`
+      <a
+        href="https://malcolmkee.com"
+        rel="noopener noreferrer"
+        target="_BLANK"
+      >
+        
+        <strong>
+          Malcolm
+        </strong>
+         
+        <em>
+          Kee
+        </em>
+      </a>
+    `);
+  });
+
+  it('renders link and italic in bold', () => {
+    const { container } = render(
+      <InlineMarkdown markdown="Hello! I *am [Malcolm](https://malcolmkee.com) _Kee_*. I am young." />
+    );
+    expect(container.textContent).toBe('Hello! I am Malcolm Kee. I am young.');
+
+    expect(container).toMatchInlineSnapshot(`
+      <div>
+        Hello! I 
+        <strong>
+          am 
+          <a
+            href="https://malcolmkee.com"
+            rel="noopener noreferrer"
+            target="_BLANK"
+          >
+            Malcolm
+          </a>
+           
+          <em>
+            Kee
+          </em>
+        </strong>
+        . I am young.
+      </div>
+    `);
+  });
+
+  it('renders italic in bold', () => {
+    const { container } = render(
+      <InlineMarkdown markdown="Hello! I am *_Malcolm_ Kee*." />
+    );
+
+    expect(container.querySelectorAll('strong')).toHaveLength(1);
+    expect(container.querySelectorAll('em')).toHaveLength(1);
+  });
+
+  it('renders bold in italic', () => {
+    const { container } = render(
+      <InlineMarkdown markdown="Hello! I am _*Malcolm* Kee_." />
+    );
+
+    expect(container.querySelectorAll('strong')).toHaveLength(1);
+    expect(container.querySelectorAll('em')).toHaveLength(1);
+  });
 });

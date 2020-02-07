@@ -2,7 +2,7 @@
 
 [![version](https://img.shields.io/npm/v/react-inline-markdown.svg)](https://www.npmjs.com/package/react-inline-markdown) ![license](https://img.shields.io/npm/l/react-inline-markdown.svg)
 
-Parsing inline markdown syntax for simple rich text support.
+Lightweight inline markdown syntax parser for simple rich text support.
 
 ## Installation
 
@@ -37,7 +37,25 @@ ReactDOM.render(<App />, document.getElementById('root'));
 At the moment only 3 markdown syntaxes are supported:
 
 - link: `[link-text](link-url)`
-- italic: `_italic`
+- italic: `_italic_`
 - bold: `*bold*`
 
-Besides, you can't combine them together, i.e. `_*test*_` will not work.
+Besides, you can combine them together, i.e. `_*test*_` will work.
+
+## API
+
+### `<InlineMarkdown />`
+
+Accepted Props:
+
+- _Required_: `markdown` (string)
+
+  The markdown string to be parsed, e.g. `I *am* _react-inline-markdown_`.
+
+- Optional: `renderers`: an object of three properties (`strong`, `em`, `a`)
+
+  Functions that returns React Elements. Used to customize how markdown will be rendered.
+
+### `parseMarkdown`: (markdown: string) => InlineMarkAST[]
+
+Internal function to generate the AST for the markdown.

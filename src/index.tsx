@@ -61,13 +61,17 @@ const Element = ({
     case 'strong':
     case 'em':
       return renderers[ast.type]({
-        children: ast.children,
+        children: ast.children.map((child, i) => (
+          <Element ast={child} renderers={renderers} key={i} />
+        )),
       });
 
     case 'a':
       return renderers.a({
         href: ast.data.url,
-        children: ast.children,
+        children: ast.children.map((child, i) => (
+          <Element ast={child} renderers={renderers} key={i} />
+        )),
       });
 
     default:
@@ -78,91 +82,71 @@ const Element = ({
 export type InlineMarkAST =
   | {
       type: 'strong' | 'em';
-      children: string;
+      children: InlineMarkAST[];
     }
   | {
       type: 'a';
       data: {
         url: string;
       };
-      children: string;
+      children: InlineMarkAST[];
     }
   | string;
 
-const anyMatch = /(\[.+?\]\(.+?\))|(\*.+?\*)|(_.+?_)/;
-const linkRegex = /(\[.+?\]\(.+?\))/;
-const linkChildrenRegex = /\[(.+)\]/;
-const linkUrlRegex = /\((.+)\)/;
-const boldRegex = /(\*.+?\*)/;
-const italicRegex = /(_.+?_)/;
+const TokenMap = {
+  '[': { regex: '\\[.+?\\]\\(.+?\\)', type: 'a', endRegex: /\]\(.+?\)/ },
+  '*': { regex: '\\*.+?\\*', type: 'strong', endRegex: /\*/ },
+  _: { regex: '_.+?_', type: 'em', endRegex: /_/ },
+} as const;
+
+const extractUrlRegex = /\]\((.+?)\)/;
+const anyTokenRegex = new RegExp(
+  TokenMap['*'].regex + '|' + TokenMap['_'].regex + '|' + TokenMap['['].regex
+);
 
 export const parseMarkdown = (markdown: string): InlineMarkAST[] => {
   const result: InlineMarkAST[] = [];
+  let toBeProcessed = markdown;
 
-  parseMarkdownRecurse(markdown, result);
+  if (!markdown || !anyTokenRegex.test(markdown)) {
+    return [markdown];
+  }
+
+  while (toBeProcessed && anyTokenRegex.test(toBeProcessed)) {
+    const match = anyTokenRegex.exec(toBeProcessed);
+    const matchIndex = match!.index;
+
+    const pre = toBeProcessed.slice(0, matchIndex);
+    result.push(pre);
+
+    const matchedToken =
+      TokenMap[toBeProcessed[matchIndex] as keyof typeof TokenMap];
+    const matchAndAfter = toBeProcessed.slice(matchIndex + 1);
+    const endMatch = matchedToken.endRegex.exec(matchAndAfter);
+    const endIndex = endMatch!.index;
+
+    const childrenText = matchAndAfter.slice(0, endIndex);
+    if (matchedToken.type === 'a') {
+      result.push({
+        type: 'a',
+        children: parseMarkdown(childrenText),
+        data: {
+          url: extractUrlRegex.exec(matchAndAfter)![1],
+        },
+      });
+    } else {
+      result.push({
+        type: matchedToken.type,
+        children: parseMarkdown(childrenText),
+      });
+    }
+
+    toBeProcessed = matchAndAfter.slice(endIndex + endMatch![0].length);
+  }
+
+  if (toBeProcessed) {
+    result.push(toBeProcessed);
+  }
 
   return result;
-};
-
-const parseMarkdownRecurse = (
-  markdown: string,
-  result: InlineMarkAST[]
-): void => {
-  if (!markdown || !anyMatch.test(markdown)) {
-    result.push(markdown);
-    return;
-  }
-
-  const splitByLink = markdown.split(linkRegex);
-  if (splitByLink.length > 1) {
-    for (let i = 0; i < splitByLink.length; i++) {
-      const part = splitByLink[i];
-      if (i % 2 === 0) {
-        parseMarkdownRecurse(part, result);
-      } else {
-        result.push({
-          type: 'a',
-          data: {
-            url: linkUrlRegex.exec(part)![1],
-          },
-          children: linkChildrenRegex.exec(part)![1],
-        });
-      }
-    }
-    return;
-  }
-
-  const splitByBold = markdown.split(boldRegex);
-  if (splitByBold.length > 1) {
-    for (let i = 0; i < splitByBold.length; i++) {
-      const part = splitByBold[i];
-      if (i % 2 === 0) {
-        parseMarkdownRecurse(part, result);
-      } else {
-        result.push({
-          type: 'strong',
-          children: part.slice(1, -1),
-        });
-      }
-    }
-    return;
-  }
-
-  const splitByItalic = markdown.split(italicRegex);
-  if (splitByItalic.length > 1) {
-    for (let i = 0; i < splitByItalic.length; i++) {
-      const part = splitByItalic[i];
-      if (i % 2 === 0) {
-        parseMarkdownRecurse(part, result);
-      } else {
-        result.push({
-          type: 'em',
-          children: part.slice(1, -1),
-        });
-      }
-    }
-    return;
-  }
-
-  result.push(markdown);
 };
