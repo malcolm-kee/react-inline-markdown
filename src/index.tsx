@@ -50,7 +50,7 @@ const Element = ({
   ast,
   renderers,
 }: {
-  ast: InlineMarkAST | string;
+  ast: InlineMarkAST;
   renderers: MarkdownRenderers;
 }) => {
   if (typeof ast === 'string') {
@@ -104,8 +104,8 @@ const anyTokenRegex = new RegExp(
   TokenMap['*'].regex + '|' + TokenMap['_'].regex + '|' + TokenMap['['].regex
 );
 
-export const parseMarkdown = (markdown: string): Array<InlineMarkAST> => {
-  const result: Array<InlineMarkAST> = [];
+export const parseMarkdown = (markdown: string): InlineMarkAST[] => {
+  const result: InlineMarkAST[] = [];
   let toBeProcessed = markdown;
 
   if (!markdown || !anyTokenRegex.test(markdown)) {

@@ -56,6 +56,6 @@ Accepted Props:
 
   Functions that returns React Elements. Used to customize how markdown will be rendered.
 
-### `parseMarkdown`: (markdown: string) => InlineMarkAST
+### `parseMarkdown`: (markdown: string) => InlineMarkAST[]
 
 Internal function to generate the AST for the markdown.
