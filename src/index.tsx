@@ -104,10 +104,8 @@ const anyTokenRegex = new RegExp(
   TokenMap['*'].regex + '|' + TokenMap['_'].regex + '|' + TokenMap['['].regex
 );
 
-export const parseMarkdown = (
-  markdown: string
-): Array<InlineMarkAST | string> => {
-  const result: Array<InlineMarkAST | string> = [];
+export const parseMarkdown = (markdown: string): Array<InlineMarkAST> => {
+  const result: Array<InlineMarkAST> = [];
   let toBeProcessed = markdown;
 
   if (!markdown || !anyTokenRegex.test(markdown)) {
