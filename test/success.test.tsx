@@ -74,8 +74,35 @@ describe(`InlineMarkdown success scenario`, () => {
         <em>
           Kee
         </em>
-        
       </a>
+    `);
+  });
+
+  it('renders link and italic in bold', () => {
+    const { container } = render(
+      <InlineMarkdown markdown="Hello! I *am [Malcolm](https://malcolmkee.com) _Kee_*. I am young." />
+    );
+    expect(container.textContent).toBe('Hello! I am Malcolm Kee. I am young.');
+
+    expect(container).toMatchInlineSnapshot(`
+      <div>
+        Hello! I 
+        <strong>
+          am 
+          <a
+            href="https://malcolmkee.com"
+            rel="noopener noreferrer"
+            target="_BLANK"
+          >
+            Malcolm
+          </a>
+           
+          <em>
+            Kee
+          </em>
+        </strong>
+        . I am young.
+      </div>
     `);
   });
 

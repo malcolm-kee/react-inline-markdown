@@ -2,7 +2,7 @@
 
 [![version](https://img.shields.io/npm/v/react-inline-markdown.svg)](https://www.npmjs.com/package/react-inline-markdown) ![license](https://img.shields.io/npm/l/react-inline-markdown.svg)
 
-Parsing inline markdown syntax for simple rich text support.
+Lightweight inline markdown syntax parser for simple rich text support.
 
 ## Installation
 
@@ -37,7 +37,7 @@ ReactDOM.render(<App />, document.getElementById('root'));
 At the moment only 3 markdown syntaxes are supported:
 
 - link: `[link-text](link-url)`
-- italic: `_italic`
+- italic: `_italic_`
 - bold: `*bold*`
 
-Besides, you can't combine them together, i.e. `_*test*_` will not work.
+Besides, you can combine them together, i.e. `_*test*_` will work.

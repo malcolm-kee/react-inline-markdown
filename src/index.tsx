@@ -74,15 +74,6 @@ const Element = ({
         )),
       });
 
-    case '<>':
-      return (
-        <>
-          {ast.children.map((child, i) => (
-            <Element ast={child} renderers={renderers} key={i} />
-          ))}
-        </>
-      );
-
     default:
       return null;
   }
@@ -100,138 +91,64 @@ export type InlineMarkAST =
       };
       children: InlineMarkAST[];
     }
-  | {
-      type: '<>';
-      children: Array<InlineMarkAST | string>;
-    };
-
-const anyMatch = /(\[.+?\]\(.+?\))|(\*.+?\*)|(_.+?_)/;
-const linkRegex = /(\[.+?\]\(.+?\))/;
-const linkChildrenRegex = /\[(.+)\]/;
-const linkUrlRegex = /\((.+)\)/;
-const boldRegex = /(\*.+?\*)/;
-const italicRegex = /(_.+?_)/;
-
-export const parseMarkdown = (markdown: string): InlineMarkAST[] => {
-  const result: InlineMarkAST[] = [];
-
-  parseMarkdownRecurseRegex(markdown, result);
-
-  return result;
-};
+  | string;
 
 const TokenMap = {
-  '[': { regex: '\\[.+?\\]\\(.+?\\)', type: 'a', end: ')' },
-  '*': { regex: '\\*.+?\\*', type: 'strong', end: '*' },
-  _: { regex: '_.+?_', type: 'em', end: '_' },
+  '[': { regex: '\\[.+?\\]\\(.+?\\)', type: 'a', endRegex: /\]\(.+?\)/ },
+  '*': { regex: '\\*.+?\\*', type: 'strong', endRegex: /\*/ },
+  _: { regex: '_.+?_', type: 'em', endRegex: /_/ },
 } as const;
 
+const extractUrlRegex = /\]\((.+?)\)/;
 const anyTokenRegex = new RegExp(
   TokenMap['*'].regex + '|' + TokenMap['_'].regex + '|' + TokenMap['['].regex
 );
 
-const parseMarkdownRecurse = (markdown: string): InlineMarkAST => {
-  let children: InlineMarkAST[] = [];
+export const parseMarkdown = (
+  markdown: string
+): Array<InlineMarkAST | string> => {
+  const result: Array<InlineMarkAST | string> = [];
   let toBeProcessed = markdown;
 
   if (!markdown || !anyTokenRegex.test(markdown)) {
-    return {
-      type: '<>',
-      children: [markdown],
-    };
+    return [markdown];
   }
 
   while (toBeProcessed && anyTokenRegex.test(toBeProcessed)) {
     const match = anyTokenRegex.exec(toBeProcessed);
     const matchIndex = match!.index;
-    const before = toBeProcessed.slice(0, matchIndex);
-    children.push({
-      type: '<>',
-      children: [before],
-    });
+
+    const pre = toBeProcessed.slice(0, matchIndex);
+    result.push(pre);
+
     const matchedToken =
       TokenMap[toBeProcessed[matchIndex] as keyof typeof TokenMap];
-    const endIndex = toBeProcessed.indexOf(matchedToken.end, matchIndex + 1);
-    const childrenText = toBeProcessed;
+    const matchAndAfter = toBeProcessed.slice(matchIndex + 1);
+    const endMatch = matchedToken.endRegex.exec(matchAndAfter);
+    const endIndex = endMatch!.index;
 
-    toBeProcessed = toBeProcessed.slice(endIndex + 1);
+    const childrenText = matchAndAfter.slice(0, endIndex);
+    if (matchedToken.type === 'a') {
+      result.push({
+        type: 'a',
+        children: parseMarkdown(childrenText),
+        data: {
+          url: extractUrlRegex.exec(matchAndAfter)![1],
+        },
+      });
+    } else {
+      result.push({
+        type: matchedToken.type,
+        children: parseMarkdown(childrenText),
+      });
+    }
+
+    toBeProcessed = matchAndAfter.slice(endIndex + endMatch![0].length);
   }
 
   if (toBeProcessed) {
-    children.push({
-      type: '<>',
-      children: [toBeProcessed],
-    });
+    result.push(toBeProcessed);
   }
 
-  return {
-    type: '<>',
-    children,
-  };
-};
-
-const parseMarkdownRecurseRegex = (
-  markdown: string,
-  result: InlineMarkAST[]
-): void => {
-  if (!markdown || !anyMatch.test(markdown)) {
-    result.push({
-      type: '<>',
-      children: [markdown],
-    });
-    return;
-  }
-
-  const splitByLink = markdown.split(linkRegex);
-  if (splitByLink.length > 1) {
-    for (let i = 0; i < splitByLink.length; i++) {
-      const part = splitByLink[i];
-      if (i % 2 === 0) {
-        parseMarkdownRecurseRegex(part, result);
-      } else {
-        result.push({
-          type: 'a',
-          data: {
-            url: linkUrlRegex.exec(part)![1],
-          },
-          children: parseMarkdown(linkChildrenRegex.exec(part)![1]),
-        });
-      }
-    }
-    return;
-  }
-
-  const splitByBold = markdown.split(boldRegex);
-  if (splitByBold.length > 1) {
-    for (let i = 0; i < splitByBold.length; i++) {
-      const part = splitByBold[i];
-      if (i % 2 === 0) {
-        parseMarkdownRecurseRegex(part, result);
-      } else {
-        result.push({
-          type: 'strong',
-          children: parseMarkdown(part.slice(1, -1)),
-        });
-      }
-    }
-    return;
-  }
-
-  const splitByItalic = markdown.split(italicRegex);
-  if (splitByItalic.length > 1) {
-    for (let i = 0; i < splitByItalic.length; i++) {
-      const part = splitByItalic[i];
-      if (i % 2 === 0) {
-        parseMarkdownRecurseRegex(part, result);
-      } else {
-        result.push({
-          type: 'em',
-          children: parseMarkdown(part.slice(1, -1)),
-        });
-      }
-    }
-    return;
-  }
-
-  result.push({ type: '<>', children: [markdown] });
+  return result;
 };
