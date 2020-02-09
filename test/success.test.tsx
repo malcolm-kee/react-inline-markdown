@@ -123,4 +123,46 @@ describe(`InlineMarkdown success scenario`, () => {
     expect(container.querySelectorAll('strong')).toHaveLength(1);
     expect(container.querySelectorAll('em')).toHaveLength(1);
   });
+
+  it('renders p tag', () => {
+    const { container } = render(
+      <InlineMarkdown
+        markdown={`Hello
+    
+    What is this?`}
+      />
+    );
+
+    expect(container.querySelectorAll('p')).toHaveLength(2);
+  });
+
+  it('renders links, bold, and italic in p tag', () => {
+    const { container } = render(
+      <InlineMarkdown
+        markdown={`Hello *there!*
+    
+    You _can_ visit my website [here](https://malcolmkee.com).`}
+      />
+    );
+
+    expect(container.querySelectorAll('p')).toHaveLength(2);
+    expect(container.querySelectorAll('strong')).toHaveLength(1);
+    expect(container.querySelectorAll('em')).toHaveLength(1);
+    expect(container.querySelectorAll('a')).toHaveLength(1);
+  });
+
+  it('renders nothing for empty string', () => {
+    const { container } = render(<InlineMarkdown markdown="" />);
+
+    expect(container.firstChild).toBeNull();
+  });
+});
+
+describe(`Exception handling`, () => {
+  it('renders nothing when invalid markdown is provided', () => {
+    const { container } = render(
+      <InlineMarkdown markdown={{ x: 'x' } as any} />
+    );
+    expect(container.firstChild).toBeNull();
+  });
 });
