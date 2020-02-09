@@ -30,7 +30,7 @@ export const InlineMarkdown = ({
   markdown,
   renderers = {},
 }: InlineMarkdownProps) => {
-  if (!markdown) {
+  if (!markdown || typeof markdown !== 'string') {
     return null;
   }
 
@@ -77,6 +77,7 @@ const Element = ({
         )),
       });
 
+    /* istanbul ignore next */
     default:
       return null;
   }

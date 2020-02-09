@@ -150,4 +150,19 @@ describe(`InlineMarkdown success scenario`, () => {
     expect(container.querySelectorAll('em')).toHaveLength(1);
     expect(container.querySelectorAll('a')).toHaveLength(1);
   });
+
+  it('renders nothing for empty string', () => {
+    const { container } = render(<InlineMarkdown markdown="" />);
+
+    expect(container.firstChild).toBeNull();
+  });
+});
+
+describe(`Exception handling`, () => {
+  it('renders nothing when invalid markdown is provided', () => {
+    const { container } = render(
+      <InlineMarkdown markdown={{ x: 'x' } as any} />
+    );
+    expect(container.firstChild).toBeNull();
+  });
 });
