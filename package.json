@@ -2,7 +2,7 @@
   "name": "react-inline-markdown",
   "description": "Parsing inline markdown syntax for simple rich text support.",
   "author": "Malcolm Kee",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
