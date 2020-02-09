@@ -23,7 +23,9 @@ const App = () => {
   return (
     <div>
       <InlineMarkdown
-        markdown={`Hi! I _am_ *Malcolm* [Kee](https://malcolmkee.com)`}
+        markdown={`Hi! I _am_ *Malcolm* Kee.
+        
+        Checkout [my website](https://malcolmkee.com)`}
       />
     </div>
   );
@@ -34,8 +36,9 @@ ReactDOM.render(<App />, document.getElementById('root'));
 
 ## Features
 
-At the moment only 3 markdown syntaxes are supported:
+At the moment only 4 markdown syntaxes are supported:
 
+- paragraph: (two line breaks)
 - link: `[link-text](link-url)`
 - italic: `_italic_`
 - bold: `*bold*`
@@ -52,7 +55,7 @@ Accepted Props:
 
   The markdown string to be parsed, e.g. `I *am* _react-inline-markdown_`.
 
-- Optional: `renderers`: an object of three properties (`strong`, `em`, `a`)
+- Optional: `renderers`: an object of four properties (`strong`, `em`, `a`, `p`)
 
   Functions that returns React Elements. Used to customize how markdown will be rendered.
 

@@ -10,6 +10,7 @@ export type LinkRenderer = (props: {
 export type MarkdownRenderers = {
   strong: Renderer;
   em: Renderer;
+  p: Renderer;
   a: LinkRenderer;
 };
 
@@ -21,6 +22,7 @@ export type InlineMarkdownProps = {
 const defaultRenderers: MarkdownRenderers = {
   strong: props => React.createElement('strong', props),
   em: props => React.createElement('em', props),
+  p: props => React.createElement('p', props),
   a: props => <a {...props} target="_BLANK" rel="noopener noreferrer" />,
 };
 
@@ -58,6 +60,7 @@ const Element = ({
   }
 
   switch (ast.type) {
+    case 'p':
     case 'strong':
     case 'em':
       return renderers[ast.type]({
@@ -91,6 +94,10 @@ export type InlineMarkAST =
       };
       children: InlineMarkAST[];
     }
+  | {
+      type: 'p';
+      children: InlineMarkAST[];
+    }
   | string;
 
 const TokenMap = {
@@ -100,12 +107,29 @@ const TokenMap = {
 } as const;
 
 const extractUrlRegex = /\]\((.+?)\)/;
+const paragraphRegex = /(\s*[\n\r]){2}/;
 const anyTokenRegex = new RegExp(
   TokenMap['*'].regex + '|' + TokenMap['_'].regex + '|' + TokenMap['['].regex
 );
 
 export const parseMarkdown = (markdown: string): InlineMarkAST[] => {
   const result: InlineMarkAST[] = [];
+
+  const paragraphs = markdown.split(paragraphRegex);
+
+  if (paragraphs.length > 1) {
+    for (let i = 0; i < paragraphs.length; i++) {
+      if (i % 2 === 0) {
+        result.push({
+          type: 'p',
+          children: parseMarkdown(paragraphs[i]),
+        });
+      }
+    }
+
+    return result;
+  }
+
   let toBeProcessed = markdown;
 
   if (!markdown || !anyTokenRegex.test(markdown)) {
